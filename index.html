@@ -2,298 +2,164 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sysos</title>
+<title>Web Terminal</title>
+
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 
 <style>
 body {
+    background: black;
+    color: #00ff00;
+    font-family: 'VT323', monospace;
+    font-size: 22px;
     margin: 0;
-    height: 100vh;
-    background-color: #1a0d2c;
-    color: #cdaaff;
-    font-family: monospace;
+    padding: 20px;
+    text-shadow: 0 0 5px #00ff00;
+}
+
+#terminal {
+    max-width: 900px;
+    margin: auto;
+}
+
+.line {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+    flex-wrap: wrap;
 }
 
-#container {
-    width: 90%;
-    max-width: 600px;
-}
-
-h1 {
-    letter-spacing: 5px;
-    margin-bottom: 10px;
-}
-
-#bootText, #loadingText {
-    white-space: pre-line;
-    min-height: 80px;
+.prompt {
+    margin-right: 5px;
 }
 
 input {
-    width: 100%;
-    padding: 10px;
-    font-family: monospace;
-    background-color: #2b173f;
-    color: #cdaaff;
-    border: 1px solid #cdaaff;
-    text-align: center;
-    font-size: 16px;
-    display: none;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #00ff00;
+    font-family: inherit;
+    font-size: inherit;
+    flex: 1;
 }
 
-#result {
-    margin-top: 20px;
-    display: none;
-    border: 1px solid #cdaaff;
-    padding: 15px;
-    background-color: rgba(43, 23, 63, 0.6);
-    cursor: pointer;
+/* scanlines */
+body::after {
+    content: "";
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(0,255,0,0.05),
+        rgba(0,255,0,0.05) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
 }
 </style>
 </head>
 
 <body>
-
-<div id="container">
-    <h1>sysos</h1>
-
-    <div id="bootText"></div>
-    <div id="loadingText"></div>
-
-    <input type="text" id="directoryInput" placeholder="ENTER DIRECTORY..." autofocus>
-
-    <div id="result">Hhqe4YxJpRo</div>
-</div>
+<div id="terminal"></div>
 
 <script>
-const bootText = document.getElementById("bootText");
-const loadingText = document.getElementById("loadingText");
-const input = document.getElementById("directoryInput");
-const result = document.getElementById("result");
+const terminal = document.getElementById("terminal");
 
-// Typing effect
-function typeText(element, text, speed, callback){
-    element.textContent = "";
-    let i = 0;
-    function type(){
-        if(i < text.length){
-            element.textContent += text[i];
-            i++;
-            setTimeout(type, speed);
-        } else if(callback){
-            callback();
+let currentPath = "~";
+
+const fileSystem = {
+    "~": ["projects", "about.txt"],
+    "projects": ["game.exe", "website.html"]
+};
+
+const commands = {
+    help: () => {
+        return "Available commands: help, ls, cd, clear, echo, about";
+    },
+
+    ls: () => {
+        return fileSystem[currentPath].join("  ");
+    },
+
+    cd: (args) => {
+        if (!args[0]) return "";
+        if (args[0] === "..") {
+            currentPath = "~";
+            return "";
         }
-    }
-    type();
-}
+        if (fileSystem[args[0]]) {
+            currentPath = args[0];
+            return "";
+        }
+        return "Directory not found";
+    },
 
-// Boot sequence
-typeText(bootText,
-`LILAC INSTITUTE DIRECTORY CONSOLE
-Initializing...
-Loading modules... 1/2
-Loading modules... 2/2
-Establishing secure connection...
-Connecting System Database...
-Connection Secure!
-Database Secured!
-System Ready.
-`, 25, () => {
-    input.style.display = "block";
+    clear: () => {
+        terminal.innerHTML = "";
+        return "";
+    },
+
+    echo: (args) => args.join(" "),
+
+    about: () => {
+        return "This is a fake terminal built for GitHub 😎";
+    }
+};
+
+function createInputLine() {
+    const line = document.createElement("div");
+    line.className = "line";
+
+    const prompt = document.createElement("span");
+    prompt.className = "prompt";
+    prompt.textContent = `user@web:${currentPath}$`;
+
+    const input = document.createElement("input");
+    input.autofocus = true;
+
+    line.appendChild(prompt);
+    line.appendChild(input);
+    terminal.appendChild(line);
+
     input.focus();
-});
 
-// BSOD with flicker & glitch
-function triggerBSOD(){
-    const bsod = document.createElement("div");
-    bsod.style.cssText = `
-        background:#0000AA;
-        color:#FFFFFF;
-        height:100vh;
-        width:100vw;
-        font-family: monospace;
-        display:flex;
-        justify-content:flex-start;
-        align-items:flex-start;
-        padding:40px 60px;
-        box-sizing:border-box;
-        line-height:1.6;
-        overflow:hidden;
-        white-space: pre;
-    `;
-    document.body.innerHTML = "";
-    document.body.appendChild(bsod);
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            const value = input.value;
+            handleCommand(value);
 
-    const bsodText = `
-A fatal exception has occurred within LILAC_OS.
-X-X
-
-SYSTEM HALTED TO PREVENT DATA THEFT!
-
-ERROR CODE: INTRUDER-ACCESS-0x0001F-9995
-
-The system encountered an unauthorized access attempt
-within a restricted personnel directory.
-
-User: CINCLAIR
-Clearance Level: INSUFFICIENT
-
-Recommended Actions:
-- Do NOT attempt to re-enter restricted directories
-- Report this incident to your system administrator
-- Await further instruction from Lilac Institute
-
-Unauthorized intruders of Lilac Institute will be prosecuted
-according to internal regulations and applicable law.
-
-If this problem persists, contact internal support:
-
-LILAC INSTITUTE SUPPORT LINE
-Extension: 734-019
-
-System halted.
-
-Press REFRESH to restart system.
-`;
-
-    let flickerCount = 0;
-    const flickerInterval = setInterval(() => {
-        bsod.style.background = (flickerCount % 2 === 0) ? "#0000AA" : "#000099";
-        bsod.style.color = (flickerCount % 2 === 0) ? "#FFFFFF" : "#F0F0F0";
-        bsod.style.transform = `translateX(${Math.random()*4 - 2}px)`;
-        flickerCount++;
-        if(flickerCount > 6){
-            clearInterval(flickerInterval);
-            bsod.style.background = "#0000AA";
-            bsod.style.color = "#FFFFFF";
-            bsod.style.transform = "translateX(0)";
-            typeText(bsod, bsodText, 5);
+            input.disabled = true;
+            createInputLine();
         }
-    }, 80);
+    });
 }
 
-// DISCO event
-function triggerDisco(){
-    document.body.innerHTML = "";
-
-    const screen = document.createElement("div");
-    screen.style.cssText = `
-        background:black;
-        color:white;
-        height:100vh;
-        width:100vw;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        font-family: monospace;
-        font-size: 140px;
-        letter-spacing: 15px;
-        transform: scale(0.8);
-        opacity: 0;
-        transition: all 0.3s ease;
-    `;
-    screen.textContent = "DONT";
-    document.body.appendChild(screen);
-
-    // flicker before reveal
-    let flickers = 0;
-    const flicker = setInterval(() => {
-        screen.style.opacity = (flickers % 2 === 0) ? "0" : "1";
-        flickers++;
-        if(flickers > 5){
-            clearInterval(flicker);
-            screen.style.opacity = "1";
-            screen.style.transform = "scale(1)";
-        }
-    }, 80);
-
-    // attempt close after delay
-    setTimeout(() => {
-        window.open('', '_self');
-        window.close();
-
-        // fallback if browser blocks it
-        setTimeout(() => {
-            document.body.innerHTML = "";
-        }, 300);
-    }, 1200);
+function printOutput(text) {
+    if (!text) return;
+    const div = document.createElement("div");
+    div.textContent = text;
+    terminal.appendChild(div);
 }
 
-// Input handling
-input.addEventListener("keydown", function(e){
-    if(e.key === "Enter"){
-        const value = input.value.trim().toUpperCase();
-        loadingText.textContent = "";
+function handleCommand(input) {
+    const parts = input.trim().split(" ");
+    const cmd = parts[0];
+    const args = parts.slice(1);
 
-        switch(value){
-            case "PEGASUS":
-                input.style.display = "none";
-                typeText(loadingText,
-`ACCESSING DIRECTORY...
-VERIFYING...
-DECRYPTING ACCESS KEY...
-ACCESS GRANTED
-`, 30, () => { result.style.display = "block"; });
-                break;
-
-            case "PINROSE":
-                typeText(loadingText,
-`ACCESSING DIRECTORY...
-VERIFYING...
-ERROR: INSUFFICIENT CLEARANCE
-`, 30);
-                break;
-
-            case "DIRECTORY":
-                typeText(loadingText,
-`ACCESSING ROOT DIRECTORY...
-NOTICE: YOU ARE ALREADY IN ROOT DIRECTORY.
-`, 30);
-                break;
-
-            case "SYSTEM":
-                typeText(loadingText,
-`ACCESSING SYSTEM...
-ERROR: NO ADMINISTRATOR KEY DETECTED!
-`, 30);
-                break;
-
-            case "CINCLAIR":
-                typeText(loadingText,
-`ACCESSING USER PROFILE...
-OVERRIDE ATTEMPT DETECTED...
-SYSTEM VIOLATION...
-...
-...
-ERROR: COULD NOT VERIFY LOGIN_EVENT:KEY
-`, 35, () => {
-                    setTimeout(triggerBSOD, 1200);
-                });
-                break;
-
-            case "DISCO":
-                triggerDisco();
-                break;
-
-            default:
-                loadingText.textContent = "DIRECTORY NOT FOUND";
-                break;
-        }
-
-        input.value = "";
+    if (commands[cmd]) {
+        const output = commands[cmd](args);
+        printOutput(output);
+    } else if (cmd !== "") {
+        printOutput(`Command not found: ${cmd}`);
     }
-});
+}
 
-// Copy result
-result.addEventListener("click", () => {
-    navigator.clipboard.writeText("Hhqe4YxJpRo");
-    result.textContent = "Copied!";
-});
+// boot message
+printOutput("Booting system...");
+printOutput("Welcome to Web Terminal");
+printOutput("Type 'help' to begin.\n");
+
+createInputLine();
 </script>
-
 </body>
 </html>
