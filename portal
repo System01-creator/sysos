@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lilac Directory</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    background-color: #1a0d2c;
+    color: #cdaaff;
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+#container {
+    width: 90%;
+    max-width: 600px;
+}
+
+h1 {
+    letter-spacing: 5px;
+    margin-bottom: 10px;
+}
+
+#bootText, #loadingText {
+    white-space: pre-line;
+    min-height: 80px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    font-family: monospace;
+    background-color: #2b173f;
+    color: #cdaaff;
+    border: 1px solid #cdaaff;
+    text-align: center;
+    font-size: 16px;
+    display: none;
+}
+
+#result {
+    margin-top: 20px;
+    display: none;
+    border: 1px solid #cdaaff;
+    padding: 15px;
+    background-color: rgba(43, 23, 63, 0.6);
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="container">
+    <h1>LILAC INSTITUTE</h1>
+
+    <div id="bootText"></div>
+    <div id="loadingText"></div>
+
+    <input type="text" id="directoryInput" placeholder="ENTER DIRECTORY..." autofocus>
+
+    <div id="result">Hhqe4YxJpRo</div>
+</div>
+
+<script>
+const bootText = document.getElementById("bootText");
+const loadingText = document.getElementById("loadingText");
+const input = document.getElementById("directoryInput");
+const result = document.getElementById("result");
+
+// Typing effect
+function typeText(element, text, speed, callback){
+    element.textContent = "";
+    let i = 0;
+    function type(){
+        if(i < text.length){
+            element.textContent += text[i];
+            i++;
+            setTimeout(type, speed);
+        } else if(callback){
+            callback();
+        }
+    }
+    type();
+}
+
+// Boot sequence
+typeText(bootText,
+`LILAC INSTITUTE SYSTEM
+Initializing...
+Loading modules...
+Establishing secure connection...
+System Ready.
+`, 25, () => {
+    input.style.display = "block";
+    input.focus();
+});
+
+// BSOD with flicker & glitch
+function triggerBSOD(){
+    const bsod = document.createElement("div");
+    bsod.style.cssText = `
+        background:#0000AA;
+        color:#FFFFFF;
+        height:100vh;
+        width:100vw;
+        font-family: monospace;
+        display:flex;
+        justify-content:flex-start;
+        align-items:flex-start;
+        padding:40px 60px;
+        box-sizing:border-box;
+        line-height:1.6;
+        overflow:hidden;
+        white-space: pre;
+    `;
+    document.body.innerHTML = "";
+    document.body.appendChild(bsod);
+
+    const bsodText = `
+A fatal exception has occurred within LILAC_OS.
+X-X
+
+SYSTEM HALTED TO PREVENT DATA THEFT!
+
+ERROR CODE: INTRUDER-ACCESS-0x0001F-9995
+
+The system encountered an unauthorized access attempt
+within a restricted personnel directory.
+
+User: CINCLAIR
+Clearance Level: INSUFFICIENT
+
+Recommended Actions:
+- Do NOT attempt to re-enter restricted directories
+- Report this incident to your system administrator
+- Await further instruction from Lilac Institute
+
+Unauthorized intruders of Lilac Institute will be prosecuted
+according to internal regulations and applicable law.
+
+If this problem persists, contact internal support:
+
+LILAC INSTITUTE SUPPORT LINE
+Extension: 734-019
+
+System halted.
+
+Press REFRESH to restart system.
+`;
+
+    // Flicker/glitch effect
+    let flickerCount = 0;
+    const flickerInterval = setInterval(() => {
+        bsod.style.background = (flickerCount % 2 === 0) ? "#0000AA" : "#000099";
+        bsod.style.color = (flickerCount % 2 === 0) ? "#FFFFFF" : "#F0F0F0";
+        bsod.style.transform = `translateX(${Math.random()*4 - 2}px)`;
+        flickerCount++;
+        if(flickerCount > 6){
+            clearInterval(flickerInterval);
+            bsod.style.background = "#0000AA";
+            bsod.style.color = "#FFFFFF";
+            bsod.style.transform = "translateX(0)";
+            typeText(bsod, bsodText, 5);
+        }
+    }, 80);
+}
+
+// Input handling
+input.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+        const value = input.value.trim().toUpperCase();
+        loadingText.textContent = "";
+
+        switch(value){
+            case "PEGASUS":
+                input.style.display = "none";
+                typeText(loadingText,
+`ACCESSING DIRECTORY...
+VERIFYING...
+DECRYPTING ACCESS KEY...
+ACCESS GRANTED
+`, 30, () => { result.style.display = "block"; });
+                break;
+            case "PINROSE":
+                typeText(loadingText,
+`ACCESSING DIRECTORY...
+VERIFYING...
+ERROR: INVALID CLEARANCE
+`, 30);
+                break;
+            case "DIRECTORY":
+                typeText(loadingText,
+`ACCESSING DIRECTORY...
+NOTICE: YOU ARE ALREADY IN Main/Directory
+`, 30);
+                break;
+            case "SYSTEM":
+                typeText(loadingText,
+`ACCESSING SYSTEM...
+ERROR: INVALID CLEARANCE
+`, 30);
+                break;
+            case "CINCLAIR":
+                typeText(loadingText,
+`ACCESSING USER PROFILE...
+OVERRIDE ATTEMPT DETECTED...
+SYSTEM VIOLATION...
+`, 35, () => {
+                    setTimeout(triggerBSOD, 1200);
+                });
+                break;
+            default:
+                loadingText.textContent = "DIRECTORY NOT FOUND";
+                break;
+        }
+
+        input.value = "";
+    }
+});
+
+// Copy result
+result.addEventListener("click", () => {
+    navigator.clipboard.writeText("Hhqe4YxJpRo");
+    result.textContent = "Copied!";
+});
+</script>
+
+</body>
+</html>
