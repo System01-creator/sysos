@@ -126,6 +126,7 @@ back                - go back
 list [category]     - list entities/locations
 view [id]           - view item
 decrypt [entry] key - decrypt entry
+decrypt [entry] [category] [key] -- decrypt catagory
 clear               - clear terminal
 `,
 
@@ -139,7 +140,13 @@ list: (args) => {
 
     // INSIDE ENTRY → show categories
     if (!args[0]) {
-        return "Categories: entities, locations";
+        return Object.keys(database[currentEntry])
+        .filter(k => typeof database[currentEntry][k] === "object")
+        .map(k => {
+            const cat = database[currentEntry][k];
+            return cat.locked ? `${k} [LOCKED]` : k;
+        })
+        .join("\n");
     }
 
     const category = args[0];
@@ -220,24 +227,58 @@ back: () => {
 },
 
 decrypt: async (args) => {
-    const [id, key] = args;
-    const entry = database[id];
+    const [entryId, category, key] = args;
+    const entry = database[entryId];
 
     if (!entry) return "Entry not found.";
-    if (!entry.locked) return "Already decrypted.";
 
-    if (key !== entry.key) {
+    // 🟢 ENTRY-LEVEL DECRYPT
+    if (!category) {
+        if (!entry.locked) return "Already decrypted.";
+
+        if (key !== entry.key) {
+            return "Invalid key.";
+        }
+
+        await typeLine("Decrypting entry...");
+        await new Promise(r => setTimeout(r, 400));
+
+        entry.locked = false;
+        entry.content = decryptText(entry.encrypted);
+
+        return "Entry decrypted.";
+    }
+
+    // 🟢 CATEGORY-LEVEL DECRYPT
+    const categoryData = entry[category];
+
+    if (!categoryData) {
+        return "Category not found.";
+    }
+
+    if (!categoryData.locked) {
+        return "Category already unlocked.";
+    }
+
+    if (key !== categoryData.key) {
         return "Invalid key.";
     }
 
-    await typeLine("Decrypting...");
+    await typeLine(`Decrypting ${category}...`);
     await new Promise(r => setTimeout(r, 400));
 
-    entry.locked = false;
-    entry.content = decryptText(entry.encrypted);
+    categoryData.locked = false;
 
-    return "Decryption successful.";
-},
+    // 🧠 Optional: populate hidden data on unlock
+    if (category === "entities" && Object.keys(categoryData.data).length === 0) {
+        categoryData.data["entity_hidden"] = {
+            name: "Observer-23",
+            desc: "It becomes aware when you access it."
+        };
+    }
+
+    return `${category} unlocked.`;
+}
 
 clear: () => {
     terminal.innerHTML = "";
