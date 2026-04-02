@@ -5,7 +5,8 @@
 <title>SysOS Terminal</title>
 
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-
+<audio id="typeSound" src="https://www.soundjay.com/mechanical/typewriter-key-1.mp3" preload="auto"></audio>
+    
 <style>
 body {
     background: black;
@@ -79,96 +80,163 @@ const terminal = document.getElementById("terminal");
 const database = {
     "entry_001": {
         title: "World: Aether-9",
+        locked: false,
+
         entities: {
             "entity_01": {
-                name: "Test",
+                name: "Watcher",
                 desc: "Observes but never interacts."
             }
         },
+
         locations: {
             "loc_01": {
                 name: "Glass Desert",
                 desc: "A desert turned to crystal after the Collapse."
             }
         }
+    },
+
+    "entry_002": {
+        title: "Project Aether",
+        locked: true,
+        key: "override",
+
+        entities: {
+            locked: true,
+            key: "alpha",
+            data: { ... }
+        }
+        locations: {},
+
+        encrypted: "QEB NRFZH YOLTK CLU GRJMP LSBO QEB IXWV ALD"
     }
 };
 
 /* 🟢 COMMANDS */
 const commands = {
 
-    help: () => `
-COMMAND LIST:
-help        - show commands,
-list        - list all entries,
-view [id]   - open entry,
-search [x]  - search keyword,
-clear       - clear terminal,
+help: () => `
+COMMANDS:
+list                - list entries
+open [entry]        - open entry
+back                - go back
+list [category]     - list entities/locations
+view [id]           - view item
+decrypt [entry] key - decrypt entry
+clear               - clear terminal
 `,
 
-    list: () => {
+list: (args) => {
+    // no context → list entries
+    if (!currentEntry) {
         return Object.keys(database)
             .map(id => `${id} - ${database[id].title}`)
             .join("\n");
-    },
-
-    view: (args) => {
-        const id = args[0];
-        if (!database[id]) return "Entry not found.";
-
-        return `[${id}] ${database[id].title}\n\n${database[id].content}`;
-    },
-
-    search: (args) => {
-        const query = args.join(" ").toLowerCase();
-
-        const results = Object.entries(database)
-            .filter(([id, data]) =>
-                data.title.toLowerCase().includes(query) ||
-                data.content.toLowerCase().includes(query)
-            )
-            .map(([id, data]) => `${id} - ${data.title}`);
-
-        return results.length ? results.join("\n") : "No matches found.";
-    },
-
-    clear: () => {
-        terminal.innerHTML = "";
-        return "";
-    },
-
-    open: (args) => {
-        const id = args[0];
-        if (!database[id]) return "Entry not found.";
-    
-        return `
-    ${database[id].title}
-    
-    Subsections:
-    - entities
-    - locations
-    `;
-    },
-    
-    listcat: (args) => {
-    const [entry, category] = args;
-
-    if (!database[entry]) return "Entry not found.";
-    if (!database[entry][category]) return "Category not found.";
-
-    return Object.keys(database[entry][category])
-        .map(id => `${id} - ${database[entry][category][id].name}`)
-        .join("\n");
-    },
-        viewsub: (args) => {
-        const [entry, category, id] = args;
-    
-        const item = database?.[entry]?.[category]?.[id];
-        if (!item) return "Data not found.";
-    
-        return `${item.name}\n\n${item.desc}`;
     }
+
+    // inside entry → list categories
+    if (!args[0]) {
+        return "Categories: entities, locations";
+    }
+
+    const category = args[0];
+
+    if (!database[currentEntry][category]) {
+        return "Category not found.";
+    }
+
+    currentCategory = category;
+
+    const items = database[currentEntry][category];
+
+    return Object.keys(items)
+        .map(id => `${id} - ${items[id].name}`)
+        .join("\n") || "Empty.";
+},
+
+open: (args) => {
+    const id = args[0];
+    const entry = database[id];
+
+    if (!entry) return "Entry not found.";
+
+    if (entry.locked) {
+        return `[${id}] ${entry.title}\n\n[ENCRYPTED]\nUse decrypt ${id} [key]`;
+    }
+
+    currentEntry = id;
+    currentCategory = null;
+    if (!entry.locked && !entry.entities["entity_secret"]) {
+        entry.entities["entity_secret"] = { ... };
+    }
+    return `Opened ${entry.title}`;
+},
+
+view: async (args) => {
+    if (!currentEntry || !currentCategory) {
+        return "Open an entry and category first.";
+    }
+
+    const item = database[currentEntry][currentCategory][args[0]];
+
+    if (!item) return "Item not found.";
+
+    await printOutput(`${item.name}\n\n${item.desc}`);
+    return "";
+},
+
+back: () => {
+    if (currentCategory) {
+        currentCategory = null;
+        return "Exited category.";
+    }
+
+    if (currentEntry) {
+        currentEntry = null;
+        return "Exited entry.";
+    }
+
+    return "Already at root.";
+},
+
+decrypt: async (args) => {
+    const [id, key] = args;
+    const entry = database[id];
+
+    if (!entry) return "Entry not found.";
+    if (!entry.locked) return "Already decrypted.";
+
+    if (key !== entry.key) {
+        return "Invalid key.";
+    }
+
+    await typeLine("Decrypting...");
+    await new Promise(r => setTimeout(r, 400));
+
+    entry.locked = false;
+    entry.content = decryptText(entry.encrypted);
+
+    return "Decryption successful.";
+},
+
+clear: () => {
+    terminal.innerHTML = "";
+    return "";
+}
+
 };
+
+function getPrompt() {
+    let path = "SYS";
+
+    if (currentEntry) path += `/${currentEntry}`;
+    if (currentCategory) path += `/${currentCategory}`;
+
+    return path + "> ";
+}
+
+
 
 /* 🟢 TERMINAL ENGINE */
 function createInputLine() {
@@ -177,7 +245,7 @@ function createInputLine() {
 
     const prompt = document.createElement("span");
     prompt.className = "prompt";
-    prompt.textContent = "SYS> ";
+    prompt.textContent = getPrompt();
 
     const input = document.createElement("input");
     input.autofocus = true;
@@ -199,6 +267,7 @@ function createInputLine() {
     });
 }
 
+/*
 function printOutput(text) {
     if (!text) return;
 
@@ -206,7 +275,17 @@ function printOutput(text) {
     div.textContent = text;
     terminal.appendChild(div);
 }
+*/
+async function printOutput(text) {
+    if (!text) return;
 
+    const lines = text.split("\n");
+
+    for (const line of lines) {
+        await typeLine(line);
+    }
+}
+  /*
 function handleCommand(input) {
     const parts = input.trim().split(" ");
     const cmd = parts[0];
@@ -219,7 +298,27 @@ function handleCommand(input) {
         printOutput("Unknown command. Type 'help'.");
     }
 }
+    */
 
+async function handleCommand(input) {
+    const parts = input.trim().split(" ");
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    if (commands[cmd]) {
+        const output = await commands[cmd](args);
+        await printOutput(output);
+    } else if (cmd !== "") {
+        await printOutput("Unknown command. Type 'help'.");
+    }
+
+const typeSound = document.getElementById("typeSound");
+
+function playTypeSound() {
+    typeSound.currentTime = 0;
+    typeSound.play();
+}
+    
 function typeLine(text, speed = 25) {
     return new Promise(resolve => {
         const div = document.createElement("div");
@@ -229,6 +328,10 @@ function typeLine(text, speed = 25) {
         function type() {
             if (i < text.length) {
                 div.textContent += text.charAt(i);
+
+                // 🔊 play sound per character
+                playTypeSound();
+
                 i++;
                 setTimeout(type, speed);
             } else {
@@ -250,7 +353,9 @@ async function boot() {
 
     createInputLine();
 }
-
+let currentEntry = null;
+let currentCategory = null;
+    
 boot();
 </script>
 
