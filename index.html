@@ -5,7 +5,6 @@
 <title>SysOS Terminal</title>
 
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-<audio id="typeSound" src="https://www.soundjay.com/mechanical/typewriter-key-1.mp3" preload="auto"></audio>
     
 <style>
 body {
@@ -105,7 +104,7 @@ const database = {
         entities: {
             locked: true,
             key: "alpha",
-            data: {}
+            data: {name, desc}
         },
         locations: {},
 
@@ -139,6 +138,13 @@ list: (args) => {
     if (!args[0]) {
         return "Categories: entities, locations";
     }
+    const categoryData = database[currentEntry][category];
+
+    if (categoryData._locked) {
+        return "ACCESS DENIED.";
+    }
+    
+    const items = categoryData.data || categoryData;
 
     const category = args[0];
 
@@ -168,7 +174,10 @@ open: (args) => {
     currentEntry = id;
     currentCategory = null;
     if (!entry.locked && !entry.entities["entity_secret"]) {
-        entry.entities["entity_secret"] = { ... };
+        entry.entities["entity_secret"] = {
+        name: "???",
+        desc: "Something is watching through the system."
+    };
     }
     return `Opened ${entry.title}`;
 },
@@ -260,7 +269,8 @@ function createInputLine() {
         if (e.key === "Enter") {
             const value = input.value;
             handleCommand(value);
-
+            
+            input.value = value;
             input.disabled = true;
             createInputLine();
         }
@@ -299,6 +309,35 @@ function handleCommand(input) {
     }
 }
     */
+const typeSound = document.getElementById("typeSound");
+
+function playTypeSound() {
+    typeSound.currentTime = 0;
+    typeSound.play();
+}
+
+function typeLine(text, speed = 25) {
+    return new Promise(resolve => {
+        const div = document.createElement("div");
+        terminal.appendChild(div);
+
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                div.textContent += text.charAt(i);
+
+                // less spammy sound
+                if (i % 2 === 0) playTypeSound();
+
+                i++;
+                setTimeout(type, speed);
+            } else {
+                resolve();
+            }
+        }
+        type();
+    });
+}
 
 async function handleCommand(input) {
     const parts = input.trim().split(" ");
@@ -311,36 +350,6 @@ async function handleCommand(input) {
     } else if (cmd !== "") {
         await printOutput("Unknown command. Type 'help'.");
     }
-
-const typeSound = document.getElementById("typeSound");
-
-function playTypeSound() {
-    typeSound.currentTime = 0;
-    typeSound.play();
-}
-    
-function typeLine(text, speed = 25) {
-    return new Promise(resolve => {
-        const div = document.createElement("div");
-        terminal.appendChild(div);
-
-        let i = 0;
-        function type() {
-            if (i < text.length) {
-                div.textContent += text.charAt(i);
-
-                // 🔊 play sound per character
-                playTypeSound();
-
-                i++;
-                setTimeout(type, speed);
-            } else {
-                resolve();
-            }
-        }
-        type();
-    });
-}
 
 /* 🟢 BOOT SEQUENCE */
 async function boot() {
@@ -361,4 +370,7 @@ boot();
 </script>
 
 </body>
+    <div id="header">[ SysOS v3.5 ] :: Database Interface</div>
+    <div id="terminal"></div>
+    <audio id="typeSound" src="https://www.soundjay.com/mechanical/typewriter-key-1.mp3" preload="auto"></audio>
 </html>
