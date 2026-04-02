@@ -130,34 +130,34 @@ clear               - clear terminal
 `,
 
 list: (args) => {
-    // no context → list entries
+    // ROOT → list entries
     if (!currentEntry) {
-        return Object.keys(database)
-            .map(id => `${id} - ${database[id].title}`)
-            .join("\n");
+        return Object.keys(database[currentEntry])
+        .filter(k => typeof database[currentEntry][k] === "object")
+        .join(", ");
     }
 
-    // inside entry → list categories
+    // INSIDE ENTRY → show categories
     if (!args[0]) {
         return "Categories: entities, locations";
     }
-    const categoryData = database[currentEntry][category];
-
-    if (categoryData._locked) {
-        return "ACCESS DENIED.";
-    }
-    
-    const items = categoryData.data || categoryData;
 
     const category = args[0];
+    const categoryData = database[currentEntry][category];
 
-    if (!database[currentEntry][category]) {
+    if (!categoryData) {
         return "Category not found.";
+    }
+
+    // 🔐 Handle locked categories
+    if (categoryData.locked) {
+        return "ACCESS DENIED.";
     }
 
     currentCategory = category;
 
-    const item = database[currentEntry][category];
+    // 🧠 Support both normal + "data" structure
+    const items = categoryData.data || categoryData;
 
     return Object.keys(items)
         .map(id => `${id} - ${items[id].name}`)
@@ -190,7 +190,14 @@ view: async (args) => {
         return "Open an entry and category first.";
     }
 
-    const item = database[currentEntry][currentCategory][args[0]];
+    const categoryData = database[currentEntry][currentCategory];
+
+    if (categoryData.locked) {
+        return "ACCESS DENIED.";
+    }
+
+    const items = categoryData.data || categoryData;
+    const item = items[args[0]];
 
     if (!item) return "Item not found.";
 
@@ -338,42 +345,6 @@ async function handleCommand(input) {
 
 let commandHistory = [];
 let historyIndex = -1;
-
-input.addEventListener("keydown", function(e) {
-
-    if (e.key === "Enter") {
-        const value = input.value;
-
-        commandHistory.push(value);
-        historyIndex = commandHistory.length;
-
-        handleCommand(value);
-
-        input.disabled = true;
-        createInputLine();
-    }
-
-    // 🔼 UP ARROW
-    if (e.key === "ArrowUp") {
-        if (historyIndex > 0) {
-            historyIndex--;
-            input.value = commandHistory[historyIndex];
-        }
-        e.preventDefault();
-    }
-
-    // 🔽 DOWN ARROW
-    if (e.key === "ArrowDown") {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            input.value = commandHistory[historyIndex];
-        } else {
-            input.value = "";
-        }
-        e.preventDefault();
-    }
-
-});
 
 /* 🟢 BOOT SEQUENCE */
 async function boot() {
