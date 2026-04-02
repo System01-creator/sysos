@@ -154,7 +154,7 @@ list: (args) => {
 
     currentCategory = category;
 
-    const items = database[currentEntry][category];
+    const item = database[currentEntry][category];
 
     return Object.keys(items)
         .map(id => `${id} - ${items[id].name}`)
