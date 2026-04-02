@@ -283,16 +283,6 @@ function createInputLine() {
         }
     });
 }
-
-/*
-function printOutput(text) {
-    if (!text) return;
-
-    const div = document.createElement("div");
-    div.textContent = text;
-    terminal.appendChild(div);
-}
-*/
 async function printOutput(text) {
     if (!text) return;
 
@@ -302,20 +292,7 @@ async function printOutput(text) {
         await typeLine(line);
     }
 }
-  /*
-function handleCommand(input) {
-    const parts = input.trim().split(" ");
-    const cmd = parts[0];
-    const args = parts.slice(1);
 
-    if (commands[cmd]) {
-        const output = commands[cmd](args);
-        printOutput(output);
-    } else if (cmd !== "") {
-        printOutput("Unknown command. Type 'help'.");
-    }
-}
-    */
 const typeSound = document.getElementById("typeSound");
 
 function playTypeSound() {
@@ -358,6 +335,45 @@ async function handleCommand(input) {
         await printOutput("Unknown command. Type 'help'.");
     }
 }
+
+let commandHistory = [];
+let historyIndex = -1;
+
+input.addEventListener("keydown", function(e) {
+
+    if (e.key === "Enter") {
+        const value = input.value;
+
+        commandHistory.push(value);
+        historyIndex = commandHistory.length;
+
+        handleCommand(value);
+
+        input.disabled = true;
+        createInputLine();
+    }
+
+    // 🔼 UP ARROW
+    if (e.key === "ArrowUp") {
+        if (historyIndex > 0) {
+            historyIndex--;
+            input.value = commandHistory[historyIndex];
+        }
+        e.preventDefault();
+    }
+
+    // 🔽 DOWN ARROW
+    if (e.key === "ArrowDown") {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            input.value = commandHistory[historyIndex];
+        } else {
+            input.value = "";
+        }
+        e.preventDefault();
+    }
+
+});
 
 /* 🟢 BOOT SEQUENCE */
 async function boot() {
