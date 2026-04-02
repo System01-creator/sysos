@@ -78,16 +78,19 @@ const terminal = document.getElementById("terminal");
 /* 🟢 LORE DATABASE */
 const database = {
     "entry_001": {
-        title: "The Collapse",
-        content: "Year 2087. Global systems failed simultaneously. Cause unknown."
-    },
-    "entry_002": {
-        title: "Project Aether",
-        content: "An experimental system designed to simulate alternate realities."
-    },
-    "entry_003": {
-        title: "The Operators",
-        content: "Unknown individuals with direct access to SysOS core functions."
+        title: "World: Aether-9",
+        entities: {
+            "entity_01": {
+                name: "Test",
+                desc: "Observes but never interacts."
+            }
+        },
+        locations: {
+            "loc_01": {
+                name: "Glass Desert",
+                desc: "A desert turned to crystal after the Collapse."
+            }
+        }
     }
 };
 
@@ -132,6 +135,38 @@ clear       - clear terminal,
     clear: () => {
         terminal.innerHTML = "";
         return "";
+    },
+
+    open: (args) => {
+        const id = args[0];
+        if (!database[id]) return "Entry not found.";
+    
+        return `
+    ${database[id].title}
+    
+    Subsections:
+    - entities
+    - locations
+    `;
+    },
+    
+    listcat: (args) => {
+    const [entry, category] = args;
+
+    if (!database[entry]) return "Entry not found.";
+    if (!database[entry][category]) return "Category not found.";
+
+    return Object.keys(database[entry][category])
+        .map(id => `${id} - ${database[entry][category][id].name}`)
+        .join("\n");
+    },
+        viewsub: (args) => {
+        const [entry, category, id] = args;
+    
+        const item = database?.[entry]?.[category]?.[id];
+        if (!item) return "Data not found.";
+    
+        return `${item.name}\n\n${item.desc}`;
     }
 };
 
