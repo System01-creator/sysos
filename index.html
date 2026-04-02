@@ -277,7 +277,7 @@ decrypt: async (args) => {
 
     categoryData.locked = false;
 
-    // 🧠 Optional: populate hidden data on unlock
+    // populate hidden data on unlock
     if (category === "entities" && Object.keys(categoryData.data).length === 0) {
         categoryData.data["entity_hidden"] = {
             name: "Observer-23",
@@ -288,7 +288,7 @@ decrypt: async (args) => {
     return `${category} unlocked.`;
 }
 
-clear: () => {
+ clear:() => {
     terminal.innerHTML = "";
     return "";
 }
