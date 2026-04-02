@@ -248,7 +248,11 @@ function getPrompt() {
     return path + "> ";
 }
 
-
+function decryptText(text) {
+    return text.replace(/[A-Z]/g, c =>
+        String.fromCharCode((c.charCodeAt(0) - 65 - 3 + 26) % 26 + 65)
+    );
+}
 
 /* 🟢 TERMINAL ENGINE */
 function createInputLine() {
