@@ -75,6 +75,9 @@ body::after {
 <script>
 const terminal = document.getElementById("terminal");
 
+let currentEntry = null;
+let currentCategory = null;
+
 /* 🟢 LORE DATABASE */
 const database = {
     "entry_001": {
@@ -364,8 +367,7 @@ async function boot() {
     createInputLine();
 }
     
-let currentEntry = null;
-let currentCategory = null;
+
 
 boot();
     
