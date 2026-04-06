@@ -11,5 +11,3 @@ STATUS-HOST: 14% Corrupticus. Note -- Left Arm almost inoperable
 MEMORY: 253458251/429438252 -- FINE 
 LOG DATA: Y ]
 
-Lilac Institution EST. 2013
-Keyword: PEGASUS
