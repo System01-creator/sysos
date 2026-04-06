@@ -114,8 +114,8 @@ const database = {
 
         entities: {
             "entity_01": {
-                name: "Watcher",
-                desc: "Observes but never interacts."
+                name: "Sorrel",
+                desc: "Weird Angelic Being. Has wings yet cant fly, but displays normal human intellegence. Is severely weak to water, including rain, and can be slightly aggressive. Normal Height and has connections to [02, 03, 07, 12, 19, 20], Abilites are unknown."
             },
             "entity_02": {
                 name: "Meow",
@@ -230,14 +230,8 @@ list: (args) => {
         .join(", ");
     }
 
-    if (!args) {
-        return Object.keys(database[currentEntry])
-        .filter(k => typeof database[currentEntry][k] === "object")
-        .join(", ");
-    }
-
     // INSIDE ENTRY → show categories
-    if (!args[0]) {
+    else if (!args[0]) {
         return Object.keys(database[currentEntry])
         .filter(k => typeof database[currentEntry][k] === "object")
         .map(k => {
