@@ -328,9 +328,9 @@ open: (args) => {
     currentEntry = id;
     currentCategory = null;
     if (!entry.locked && !entry.entities["entity_secret"]) {
-        entry.entities["entity_00"] = {
-        name: "Me",
-        desc: "Domonic Gonzella."
+        entry.entities["entity_error"] = {
+        name: "SysOS",
+        desc: "Test Entry. Ignore. Override."
     };
     }
     return `Opened ${entry.title}`;
@@ -418,9 +418,9 @@ decrypt: async (args) => {
         categoryData.locked = false;
 
         if (category === "entities" && Object.keys(categoryData.data).length === 0) {
-            categoryData.data["entity_hidden"] = {
-                name: "Observer-23",
-                desc: "It becomes aware when you access it."
+            categoryData.data["entity_error"] = {
+                name: "Domonic Gonzella",
+                desc: "Myself. Slightly Corrupted, Left arm almost inoperable"
             };
         }
 
