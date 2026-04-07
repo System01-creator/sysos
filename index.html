@@ -224,10 +224,10 @@ clear               - clear terminal
 list: (args) => {
     // ROOT → list entries
     if (!currentEntry) {
-        return Object.keys(database[currentEntry])
-        .filter(k => typeof database[currentEntry][k] === "object")
-        .join(", ");
-    }
+        return Object.keys(database)
+            .map(id => `${id} - ${database[id].title}`)
+            .join("\n");
+}
 
     // INSIDE ENTRY → show categories
     else if (!args[0]) {
@@ -317,13 +317,15 @@ back: () => {
 },
 
 decrypt: async (args) => {
-    const [entryId, category, key] = args;
+    const entryId = args[0];
     const entry = database[entryId];
 
     if (!entry) return "Entry not found.";
 
-    // 🟢 ENTRY-LEVEL DECRYPT
-    if (!category) {
+    // Entry 
+    if (args.length === 2) {
+        const key = args[1];
+
         if (!entry.locked) return "Already decrypted.";
 
         if (key !== entry.key) {
@@ -339,35 +341,39 @@ decrypt: async (args) => {
         return "Entry decrypted.";
     }
 
-    // 🟢 CATEGORY-LEVEL DECRYPT
-    const categoryData = entry[category];
+    // Category
+    if (args.length === 3) {
+        const category = args[1];
+        const key = args[2];
 
-    if (!categoryData) {
-        return "Category not found.";
+        const categoryData = entry[category];
+
+        if (!categoryData) return "Category not found.";
+
+        if (!categoryData.locked) {
+            return "Category already unlocked.";
+        }
+
+        if (key !== categoryData.key) {
+            return "Invalid key.";
+        }
+
+        await typeLine(`Decrypting ${category}...`);
+        await new Promise(r => setTimeout(r, 400));
+
+        categoryData.locked = false;
+
+        if (category === "entities" && Object.keys(categoryData.data).length === 0) {
+            categoryData.data["entity_hidden"] = {
+                name: "Observer-23",
+                desc: "It becomes aware when you access it."
+            };
+        }
+
+        return `${category} unlocked.`;
     }
 
-    if (!categoryData.locked) {
-        return "Category already unlocked.";
-    }
-
-    if (key !== categoryData.key) {
-        return "Invalid key.";
-    }
-
-    await typeLine(`Decrypting ${category}...`);
-    await new Promise(r => setTimeout(r, 400));
-
-    categoryData.locked = false;
-
-    // populate hidden data on unlock
-    if (category === "entities" && Object.keys(categoryData.data).length === 0) {
-        categoryData.data["entity_hidden"] = {
-            name: "Observer-23",
-            desc: "It becomes aware when you access it."
-        };
-    }
-
-    return `${category} unlocked.`;
+    return "Usage: decrypt [entry] [key] OR decrypt [entry] [category] [key]";
 },
 
  clear:() => {
@@ -392,7 +398,7 @@ function decryptText(text) {
     );
 }
 
-/* 🟢 TERMINAL ENGINE */
+/*  TERMINAL ENGINE */
 function createInputLine() {
     const line = document.createElement("div");
     line.className = "line";
@@ -477,7 +483,7 @@ async function handleCommand(input) {
 let commandHistory = [];
 let historyIndex = -1;
 
-/* 🟢 BOOT SEQUENCE */
+/* BOOT SEQUENCE */
 async function boot() {
     await typeLine("Initializing SysOS...");
     await typeLine("Loading core modules...");
